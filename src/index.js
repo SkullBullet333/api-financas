@@ -154,6 +154,15 @@ app.post('/api/cartoes', async (req, res) => {
 app.post('/api/login', async (req, res) => {
     try {
         const { usuario, senha } = req.body;
+        
+        // Seeder emergencial: Se não houver nenhum usuário, cria o Pablo
+        const count = await prisma.usuario.count();
+        if (count === 0) {
+            await prisma.usuario.create({
+                data: { nome: "Pablo", senha: "123" }
+            });
+        }
+
         const userFound = await prisma.usuario.findUnique({ where: { nome: usuario } });
         
         if (userFound && userFound.senha === senha) {
