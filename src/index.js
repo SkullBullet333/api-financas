@@ -187,8 +187,14 @@ app.post('/api/configs', async (req, res) => {
         const { tipo, valor, id } = req.body;
         
         if (tipo === 'titulares') {
-            const nome = valor && typeof valor === 'object' ? valor.nome : valor;
-            const foto = valor && typeof valor === 'object' ? valor.foto : null;
+            let nome, foto, senha;
+            if (Array.isArray(valor)) {
+                [nome, senha] = valor;
+            } else if (valor && typeof valor === 'object') {
+                ({ nome, foto, senha } = valor);
+            } else {
+                nome = valor;
+            }
             
             if (!nome) {
                 console.error('Erro: Nome do titular ausente no valor:', valor);
@@ -197,8 +203,15 @@ app.post('/api/configs', async (req, res) => {
 
             await prisma.usuario.upsert({
                 where: { nome: String(nome) },
-                update: { foto: foto || undefined },
-                create: { nome: String(nome), senha: '123', foto }
+                update: { 
+                    foto: foto || undefined,
+                    senha: senha || undefined
+                },
+                create: { 
+                    nome: String(nome), 
+                    senha: senha || '123', 
+                    foto 
+                }
             });
         } else if (tipo === 'cartoes') {
             if (!Array.isArray(valor)) throw new Error("Valor deve ser um array para cartões");
