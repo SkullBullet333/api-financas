@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Usuario {
+  id    Int     @id @default(autoincrement())
+  nome  String  @unique
+  senha String
+  foto  String?
+}
+
+model Despesa {
+  id             Int      @id @default(autoincrement())
+  dataLancamento DateTime @default(now())
+  descricao      String
+  categoria      String?
+  valor          Float
+  parcelaAtual   Int      @default(1)
+  totalParcelas  Int      @default(1)
+  vencimento     DateTime
+  titular        String
+  status         String   @default("Em aberto")
+  competencia    String
+  simulada       Boolean  @default(false)
+}
+
+model Receita {
+  id             Int      @id @default(autoincrement())
+  dataLancamento DateTime @default(now())
+  descricao      String
+  valor          Float
+  recebimento    DateTime
+  titular        String
+  competencia    String
+  simulada       Boolean  @default(false)
+}
+
+model CartaoGasto {
+  id             Int      @id @default(autoincrement())
+  dataLancamento DateTime @default(now())
+  cartao         String
+  descricao      String
+  categoria      String?
+  valor          Float
+  parcelaAtual   Int      @default(1)
+  totalParcelas  Int      @default(1)
+  vencimento     DateTime
+  titular        String
+  competencia    String
+  simulada       Boolean  @default(false)
+}
+
+model CartaoConfig {
+  id            Int    @id @default(autoincrement())
+  nome          String
+  titular       String
+  diaVencimento Int
+  diaFechamento Int
+}
+
+model Categoria {
+  id            Int     @id @default(autoincrement())
+  nome          String  @unique
+  palavrasChave String?
+}
+
+model Nota {
+  id    Int    @id @default(autoincrement())
+  texto String
+}
