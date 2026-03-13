@@ -183,24 +183,29 @@ app.get('/api/configs', async (req, res) => {
 
 app.post('/api/configs', async (req, res) => {
     try {
+        console.log('Recebido POST /api/configs:', req.body);
         const { tipo, valor, id } = req.body;
         
         if (tipo === 'titulares') {
-            const nome = typeof valor === 'object' ? valor.nome : valor;
-            const foto = typeof valor === 'object' ? valor.foto : null;
+            const nome = valor && typeof valor === 'object' ? valor.nome : valor;
+            const foto = valor && typeof valor === 'object' ? valor.foto : null;
             
-            if (!nome) throw new Error("Nome do titular é obrigatório");
+            if (!nome) {
+                console.error('Erro: Nome do titular ausente no valor:', valor);
+                return res.status(400).json({ error: "Nome do titular é obrigatório" });
+            }
 
             await prisma.usuario.upsert({
-                where: { nome },
+                where: { nome: String(nome) },
                 update: { foto: foto || undefined },
-                create: { nome, senha: '123', foto }
+                create: { nome: String(nome), senha: '123', foto }
             });
         } else if (tipo === 'cartoes') {
+            if (!Array.isArray(valor)) throw new Error("Valor deve ser um array para cartões");
             const [nome, titular, diaVencimento, diaFechamento] = valor;
             const data = { 
-                nome, 
-                titular, 
+                nome: String(nome), 
+                titular: String(titular), 
                 diaVencimento: Number(diaVencimento || 10), 
                 diaFechamento: Number(diaFechamento || 0) 
             };
@@ -214,13 +219,15 @@ app.post('/api/configs', async (req, res) => {
                 await prisma.cartaoConfig.create({ data });
             }
         } else if (tipo === 'categorias') {
-            const nome = Array.isArray(valor) ? valor[0] : (typeof valor === 'object' ? valor.nome : valor);
-            const palavrasChave = Array.isArray(valor) ? valor[1] : (typeof valor === 'object' ? valor.palavrasChave : "");
+            const nome = Array.isArray(valor) ? valor[0] : (valor && typeof valor === 'object' ? valor.nome : valor);
+            const palavrasChave = Array.isArray(valor) ? valor[1] : (valor && typeof valor === 'object' ? valor.palavrasChave : "");
+
+            if (!nome) return res.status(400).json({ error: "Nome da categoria é obrigatório" });
 
             await prisma.categoria.upsert({
-                where: { nome },
-                update: { palavrasChave },
-                create: { nome, palavrasChave }
+                where: { nome: String(nome) },
+                update: { palavrasChave: String(palavrasChave) },
+                create: { nome: String(nome), palavrasChave: String(palavrasChave) }
             });
         }
         
