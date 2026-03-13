@@ -186,26 +186,37 @@ app.post('/api/configs', async (req, res) => {
         const { tipo, valor, id } = req.body;
         
         if (tipo === 'titulares') {
-            const { nome, foto } = valor;
+            const nome = typeof valor === 'object' ? valor.nome : valor;
+            const foto = typeof valor === 'object' ? valor.foto : null;
+            
+            if (!nome) throw new Error("Nome do titular é obrigatório");
+
             await prisma.usuario.upsert({
                 where: { nome },
-                update: { foto },
+                update: { foto: foto || undefined },
                 create: { nome, senha: '123', foto }
             });
         } else if (tipo === 'cartoes') {
             const [nome, titular, diaVencimento, diaFechamento] = valor;
+            const data = { 
+                nome, 
+                titular, 
+                diaVencimento: Number(diaVencimento || 10), 
+                diaFechamento: Number(diaFechamento || 0) 
+            };
+
             if (id) {
                 await prisma.cartaoConfig.update({
                     where: { id: Number(id) },
-                    data: { nome, titular, diaVencimento: Number(diaVencimento), diaFechamento: Number(diaFechamento) }
+                    data
                 });
             } else {
-                await prisma.cartaoConfig.create({
-                    data: { nome, titular, diaVencimento: Number(diaVencimento), diaFechamento: Number(diaFechamento) }
-                });
+                await prisma.cartaoConfig.create({ data });
             }
         } else if (tipo === 'categorias') {
-            const [nome, palavrasChave] = valor;
+            const nome = Array.isArray(valor) ? valor[0] : (typeof valor === 'object' ? valor.nome : valor);
+            const palavrasChave = Array.isArray(valor) ? valor[1] : (typeof valor === 'object' ? valor.palavrasChave : "");
+
             await prisma.categoria.upsert({
                 where: { nome },
                 update: { palavrasChave },
